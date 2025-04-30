@@ -6,6 +6,7 @@
 #include <sound/control.h>
 #include <sound/pcm.h>
 #endif
+
 // Replace these with the actual VID and PID of your USB speaker
 #define USB_VENDOR_ID 0x1d6b
 #define USB_PRODUCT_ID 0x0003
@@ -28,14 +29,14 @@ static int my_usb_probe(struct usb_interface *interface, const struct usb_device
     pr_info("USB Speaker Probed: Vendor ID = 0x%X, Product ID = 0x%X\n",
             id->idVendor, id->idProduct);
 
-    // Create a new sound card
+    // Create a new sound card if the sound subsystem is enabled
     err = snd_card_create(SNDRV_DEFAULT_IDX1, "USB_Speaker", THIS_MODULE, 0, &card);
     if (err < 0) {
         pr_err("Failed to create sound card: %d\n", err);
         return err;
     }
 
-    // Set the USB interface number you are interested in
+    // Retrieve the first interface descriptor
     iface_desc = &interface->altsetting[0];
 
     // Iterate through the endpoints to find the playback endpoint
@@ -43,14 +44,10 @@ static int my_usb_probe(struct usb_interface *interface, const struct usb_device
         endpoint = &iface_desc->endpoint[i].desc;
         if (endpoint->bEndpointAddress & USB_DIR_OUT) {
             pr_info("Found playback endpoint: 0x%X\n", endpoint->bEndpointAddress);
-
-            // TODO: Implement any necessary endpoint configuration
-
+            // TODO: Implement necessary endpoint configuration
             break;
         }
     }
-
-    // TODO: Implement any additional ALSA initialization steps, e.g., configuring PCM parameters
 
     // Register the sound card
     err = snd_card_register(card);
@@ -60,9 +57,9 @@ static int my_usb_probe(struct usb_interface *interface, const struct usb_device
         return err;
     }
 
-    // TODO: Implement any additional initialization steps for your USB speaker
+    // TODO: Implement additional initialization for USB speaker
 
-    return 0;  // Return 0 for success
+    return 0;
 }
 
 static void my_usb_disconnect(struct usb_interface *interface)
@@ -72,20 +69,23 @@ static void my_usb_disconnect(struct usb_interface *interface)
     pr_info("USB Speaker Disconnected: Vendor ID = 0x%X, Product ID = 0x%X\n",
             udev->descriptor.idVendor, udev->descriptor.idProduct);
 
-    // TODO: Implement cleanup for your USB speaker
-    // Free allocated resources, unregister with ALSA, etc.
+    // Cleanup resources allocated for the USB speaker and unregister ALSA
+    // TODO: Implement necessary cleanup steps
 }
+
 #else
+
 static int my_usb_probe(struct usb_interface *interface, const struct usb_device_id *id)
 {
     pr_err("USB Speaker module cannot be loaded - Sound subsystem not enabled in the kernel\n");
-    return -ENODEV; // Return error code indicating failure
+    return -ENODEV; // Indicate failure due to missing sound subsystem
 }
 
 static void my_usb_disconnect(struct usb_interface *interface)
 {
     // Nothing to do for disconnect since module cannot be loaded
 }
+
 #endif
 
 static struct usb_driver my_usb_driver = {
